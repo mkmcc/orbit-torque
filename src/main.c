@@ -25,11 +25,11 @@ static int rank, size;
 
 int main (int argc, char *argv[])
 {
-  int i, j, n=8;
+  int i, j, n=128;
   double a=0.5, e, theta;
 
-  double emin = 0.5, emax = 1.0;
-  double tmin = 0.0, tmax = 1.0*M_PI;
+  double emin = 0.05,      emax = 1.0;
+  double tmin = 0.1*M_PI, tmax = 0.9*M_PI;
 
   /* crude progress bar */
   char progress[64] = "[0%...25%...50%...75%...100%]", buf[64] = "";
