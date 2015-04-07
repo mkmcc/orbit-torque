@@ -234,7 +234,7 @@ void torque_converged(double a, double e, double theta, double ia, double ib,
       break;
   }
 
-  if (i==imax){
+  if (i>imax){
     fprintf(stderr,
             "[torque_converged]: did not converge at [a,e,theta,ia,ib] = [%f,%f,%f,%f,%f]\n",
             a, e, theta, ia, ib);
