@@ -55,7 +55,7 @@ double alpha(double a, double e, double theta)
   double tau[3];
   double lim = 0.01;
 
-  int i, nfit=40;
+  int i, nfit=2;
   double ia[nfit], ta[nfit];
 
   double axis[3], slope, err;
@@ -66,7 +66,7 @@ double alpha(double a, double e, double theta)
   axis[2] = 0.0;
 
   for (i=0; i<nfit; i++)
-    ia[i] = -lim + 2.0 * lim * i / (nfit-1);
+    ia[i] = 0.0 + 1.0 * lim * (i+1) / (nfit);
 
   for (i=0; i<nfit; i++){
     torque_converged(a, e, theta, ia[i], 0.0, tau);
@@ -75,12 +75,14 @@ double alpha(double a, double e, double theta)
 
   slope = (ta[nfit-1] - ta[0]) / (ia[nfit-1] - ia[0]);
 
-  err = fabs(ta[1]-slope*ia[1]) + 0*fabs(ta[2]-slope*ia[2]);
+  err = 0.0;
+  for (i=1; i<nfit-1; i++)
+    err += fabs(ta[i]-slope*ia[i]);
 
-  if (err > 1.0e-2 * fabs(ta[3])){
+  if (err > 1.0e-2 * fabs(ta[nfit-1])){
     fprintf(stderr,
             "[alpha]: nonlinear fit at [a,e] = [%f,%f] (%f %%)\n",
-            a, e, 100.0 * err / ta[3]);
+            a, e, 100.0 * err / ta[nfit-1]);
 
     for(i=0; i<nfit; i++)
       fprintf(stderr, "{%f,\t%f},\n", ia[i], ta[i]);
@@ -94,8 +96,8 @@ double beta(double a, double e, double theta)
   double tau[3];
   double lim = 0.0001;
 
-  int i;
-  double ib[4], tb[4];
+  int i, nfit=2;
+  double ib[nfit], tb[nfit];
 
   double axis[3], slope, err;
 
@@ -104,22 +106,24 @@ double beta(double a, double e, double theta)
   axis[1] =  cos(theta);
   axis[2] = 0.0;
 
-  for (i=0; i<4; i++)
-    ib[i] = -lim + 2.0 * lim * i / (4-1);
+  for (i=0; i<nfit; i++)
+    ib[i] = 0.0 + 1.0 * lim * (i+1) / (nfit);
 
-  for (i=0; i<4; i++){
+  for (i=0; i<nfit; i++){
     torque_converged(a, e, theta, 0.0, ib[i], tau);
     tb[i] = dot(tau, axis);
   }
 
-  slope = (tb[3] - tb[0]) / (ib[3] - ib[0]);
+  slope = (tb[nfit-1] - tb[0]) / (ib[nfit-1] - ib[0]);
 
-  err = fabs(tb[1]-slope*ib[1]) + 0*fabs(tb[2]-slope*ib[2]);
+  err = 0.0;
+  for (i=1; i<nfit-1; i++)
+    err += fabs(tb[i]-slope*ib[i]);
 
-  if (err > 1.0e-2 * fabs(tb[3]))
+  if (err > 1.0e-2 * fabs(tb[nfit-1]))
     fprintf(stderr,
             "[ beta]: nonlinear fit at [a,e] = [%f,%f] (%f %%)\n",
-            a, e, 100.0 * err / tb[3]);
+            a, e, 100.0 * err / tb[nfit-1]);
 
   return slope;
 }
