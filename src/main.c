@@ -53,7 +53,7 @@ double gamma_sq(double a, double e, double theta)
 double alpha(double a, double e, double theta)
 {
   double tau[3];
-  double lim = 0.01;
+  double lim = 0.1;
 
   int i, nfit=2;
   double ia[nfit], ta[nfit];
@@ -94,7 +94,7 @@ double alpha(double a, double e, double theta)
 double beta(double a, double e, double theta)
 {
   double tau[3];
-  double lim = 0.0001;
+  double lim = 0.1;
 
   int i, nfit=2;
   double ib[nfit], tb[nfit];
