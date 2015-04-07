@@ -23,13 +23,11 @@ int main (int argc, char *argv[])
   int ind, old=0;
 
   /* data array */
-  double **evals, **tvals, **growthrate;
+  double ***data_array;
 
   FILE *fp;
 
-  evals      = (double**) calloc_2d_array(n, n, sizeof(double));
-  tvals      = (double**) calloc_2d_array(n, n, sizeof(double));
-  growthrate = (double**) calloc_2d_array(n, n, sizeof(double));
+  data_array = (double***) calloc_3d_array(3, n, n, sizeof(double));
 
 
   for(i=0; i<n; i++){
@@ -37,9 +35,9 @@ int main (int argc, char *argv[])
       e     =  0.05 + (0.95-0.05) * i/(n-1);
       theta = (0.05 + (0.95-0.05) * j/(n-1)) * M_PI;
 
-      evals[i][j] = e;
-      tvals[i][j] = theta;
-      growthrate[i][j] = gamma_sq(a, e, theta);
+      data_array[0][i][j] = e;
+      data_array[1][i][j] = theta;
+      data_array[2][i][j] = gamma_sq(a, e, theta);
 
       /* crude progress bar */
       ind = floor( (1.0*i*n+j+1)/(n*n) * strlen(progress));
@@ -55,14 +53,15 @@ int main (int argc, char *argv[])
   fp = fopen("gamma-sq.dat", "w");
   for (i=0; i<n; i++){
     for (j=0; j<n; j++){
-      fprintf(fp, "%f\t%f\t%f\n", evals[i][j], tvals[i][j], growthrate[i][j]);
+      fprintf(fp, "%f\t%f\t%f\n",
+              data_array[0][i][j],
+              data_array[1][i][j],
+              data_array[2][i][j]);
     }
   }
   fclose(fp);
 
-  free_2d_array((void**) evals);
-  free_2d_array((void**) tvals);
-  free_2d_array((void**) growthrate);
+  free_3d_array((void***) data_array);
 
   return 0;
 }
