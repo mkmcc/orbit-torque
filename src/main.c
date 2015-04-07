@@ -9,13 +9,23 @@
 #include "ath_error.h"
 #include "kep.h"
 
+#define MPI_PARALLEL
+
+#ifdef MPI_PARALLEL
+#include <mpi.h>
+#endif
+
 double alpha(double a, double e, double theta);
 double beta (double a, double e, double theta);
 double gamma_sq(double a, double e, double theta);
 
+#ifdef MPI_PARALLEL
+static int rank, size;
+#endif
+
 int main (int argc, char *argv[])
 {
-  int i, j, n=4;
+  int i, j, n=32;
   double a=0.5, e, theta;
 
   double emin = 0.5, emax = 1.0;
@@ -30,10 +40,30 @@ int main (int argc, char *argv[])
 
   FILE *fp;
 
+  int imin=0, imax=n;
+
+#ifdef MPI_PARALLEL
+  int err;
+  double ***global_data_array;
+
+  MPI_Init (&argc, &argv);                      /* starts MPI              */
+  MPI_Comm_rank (MPI_COMM_WORLD, &rank);        /* get current process id  */
+  MPI_Comm_size (MPI_COMM_WORLD, &size);        /* get number of
+                                                   processes */
+
+  global_data_array = (double***) calloc_3d_array(3, n, n, sizeof(double));
+
+  if (n % size != 0)
+    ath_error("n must be divisible by num processors,\n");
+
+  imin = rank * (n/size);
+  imax = (rank+1) * (n/size);
+#endif /* MPI_PARALLEL */
+
   data_array = (double***) calloc_3d_array(3, n, n, sizeof(double));
 
 
-  for(i=0; i<n; i++){
+  for(i=imin; i<imax; i++){
     for(j=0; j<n; j++){
       e     = emin + (i+0.5)/n * (emax-emin);
       theta = tmin + (j+0.5)/n * (tmax-tmin);
@@ -43,16 +73,29 @@ int main (int argc, char *argv[])
       data_array[2][i][j] = gamma_sq(a, e, theta);
 
       /* crude progress bar */
-      ind = floor( (1.0*i*n+j+1)/(n*n) * strlen(progress));
+      ind = floor( (1.0*(i-imin)*n+j+1)/((imax-imin)*n) * strlen(progress));
       if (ind > old){
         old = ind;
         strncpy(buf, progress, ind);
         buf[ind] = '\0';
+#ifdef MPI_PARALLEL
+        fprintf(stderr, "[proc %d]: %s\n", rank, buf);
+#else
         fprintf(stderr, "%s\n", buf);
+#endif
       }
     }
   }
 
+#ifdef MPI_PARALLEL
+  err = MPI_Reduce(data_array, global_data_array, 3*n*n, MPI_DOUBLE,
+                   MPI_SUM, 0, MPI_COMM_WORLD);
+#endif /* MPI_PARALLEL */
+
+
+#ifdef MPI_PARALLEL
+  if (rank == 0){
+#endif
   fp = fopen("gamma-sq.dat", "w");
   for (i=0; i<n; i++){
     for (j=0; j<n; j++){
@@ -63,8 +106,15 @@ int main (int argc, char *argv[])
     }
   }
   fclose(fp);
+#ifdef MPI_PARALLEL
+  }
+#endif
 
   free_3d_array((void***) data_array);
+
+#ifdef MPI_PARALLEL
+  MPI_Finalize();
+#endif
 
   return 0;
 }
