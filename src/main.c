@@ -1,0 +1,125 @@
+#include <math.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "linalg.h"
+#include "ath_array.h"
+#include "ath_error.h"
+#include "kep.h"
+
+double alpha(double a, double e, double theta);
+double beta (double a, double e, double theta);
+double gamma_sq(double a, double e, double theta);
+
+int main (int argc, char *argv[])
+{
+  int i, j, n=4;
+  double a=0.5, e, theta;
+
+  /* crude progress bar */
+  char progress[64] = "[0%...25%...50%...75%...100%]", buf[64] = "";
+  int ind, old=0;
+
+  for(i=0; i<n; i++){
+    for(j=0; j<n; j++){
+      e     =  0.05 + (0.95-0.05) * i/(n-1);
+      theta = (0.05 + (0.95-0.05) * j/(n-1)) * M_PI;
+
+      printf("%f\t%f\t%f\n", e, theta, gamma_sq(a, e, theta));
+
+      /* crude progress bar */
+      ind = floor( (1.0*i*n+j)/(n*n) * strlen(progress));
+      if (ind > old){
+        old = ind;
+        strncpy(buf, progress, ind);
+        buf[ind] = '\0';
+        fprintf(stderr, "%s\n", buf);
+      }
+    }
+  }
+
+  return 0;
+}
+
+double gamma_sq(double a, double e, double theta)
+{
+  double al = alpha(a, e, theta),
+    be = beta(a, e, theta);
+  return -1.0 * al * be / (a * (1.0-e*e));
+}
+
+double alpha(double a, double e, double theta)
+{
+  double tau[3];
+  double lim = 0.01;
+
+  int i, nfit=40;
+  double ia[nfit], ta[nfit];
+
+  double axis[3], slope, err;
+
+  /* ahat for orbit 2 (= the rotated one) */
+  axis[0] = -cos(theta);
+  axis[1] = -sin(theta);
+  axis[2] = 0.0;
+
+  for (i=0; i<nfit; i++)
+    ia[i] = -lim + 2.0 * lim * i / (nfit-1);
+
+  for (i=0; i<nfit; i++){
+    torque_converged(a, e, theta, ia[i], 0.0, tau);
+    ta[i] = dot(tau, axis);
+  }
+
+  slope = (ta[nfit-1] - ta[0]) / (ia[nfit-1] - ia[0]);
+
+  err = fabs(ta[1]-slope*ia[1]) + 0*fabs(ta[2]-slope*ia[2]);
+
+  if (err > 1.0e-2 * fabs(ta[3])){
+    fprintf(stderr,
+            "[alpha]: nonlinear fit at [a,e] = [%f,%f] (%f %%)\n",
+            a, e, 100.0 * err / ta[3]);
+
+    for(i=0; i<nfit; i++)
+      fprintf(stderr, "{%f,\t%f},\n", ia[i], ta[i]);
+  }
+
+  return slope;
+}
+
+double beta(double a, double e, double theta)
+{
+  double tau[3];
+  double lim = 0.0001;
+
+  int i;
+  double ib[4], tb[4];
+
+  double axis[3], slope, err;
+
+  /* bhat for orbit 2 (= the rotated one) */
+  axis[0] = -sin(theta);
+  axis[1] =  cos(theta);
+  axis[2] = 0.0;
+
+  for (i=0; i<4; i++)
+    ib[i] = -lim + 2.0 * lim * i / (4-1);
+
+  for (i=0; i<4; i++){
+    torque_converged(a, e, theta, 0.0, ib[i], tau);
+    tb[i] = dot(tau, axis);
+  }
+
+  slope = (tb[3] - tb[0]) / (ib[3] - ib[0]);
+
+  err = fabs(tb[1]-slope*ib[1]) + 0*fabs(tb[2]-slope*ib[2]);
+
+  if (err > 1.0e-2 * fabs(tb[3]))
+    fprintf(stderr,
+            "[ beta]: nonlinear fit at [a,e] = [%f,%f] (%f %%)\n",
+            a, e, 100.0 * err / tb[3]);
+
+  return slope;
+}
