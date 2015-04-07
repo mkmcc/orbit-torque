@@ -25,7 +25,7 @@ static int rank, size;
 
 int main (int argc, char *argv[])
 {
-  int i, j, n=32;
+  int i, j, n=8;
   double a=0.5, e, theta;
 
   double emin = 0.5, emax = 1.0;
@@ -44,14 +44,15 @@ int main (int argc, char *argv[])
 
 #ifdef MPI_PARALLEL
   int err;
-  double ***global_data_array;
+  double *send_buf, *recv_buf;
 
   MPI_Init (&argc, &argv);                      /* starts MPI              */
   MPI_Comm_rank (MPI_COMM_WORLD, &rank);        /* get current process id  */
   MPI_Comm_size (MPI_COMM_WORLD, &size);        /* get number of
                                                    processes */
 
-  global_data_array = (double***) calloc_3d_array(3, n, n, sizeof(double));
+  send_buf = (double*) calloc_1d_array(3*n*n, sizeof(double));
+  recv_buf = (double*) calloc_1d_array(3*n*n, sizeof(double));
 
   if (n % size != 0)
     ath_error("n must be divisible by num processors,\n");
@@ -88,8 +89,34 @@ int main (int argc, char *argv[])
   }
 
 #ifdef MPI_PARALLEL
-  err = MPI_Reduce(data_array, global_data_array, 3*n*n, MPI_DOUBLE,
-                   MPI_SUM, 0, MPI_COMM_WORLD);
+  /* pack into a 1d array for sending */
+  for(i=imin; i<imax; i++){
+    for(j=0; j<n; j++){
+      ind = (i*n + j) * 3;
+      send_buf[ind  ] = data_array[0][i][j];
+      send_buf[ind+1] = data_array[1][i][j];
+      send_buf[ind+2] = data_array[2][i][j];
+    }
+  }
+
+  err = MPI_Allreduce(send_buf, recv_buf, 3*n*n, MPI_DOUBLE,
+                      MPI_SUM, MPI_COMM_WORLD);
+
+  if (err != 0)
+    ath_error("mpi_allreduce failed on proc %d with error %d", rank, err);
+
+  /* unpack */
+  for(i=0; i<n; i++){
+    for(j=0; j<n; j++){
+      ind = (i*n + j) * 3;
+      data_array[0][i][j] = recv_buf[ind  ];
+      data_array[1][i][j] = recv_buf[ind+1];
+      data_array[2][i][j] = recv_buf[ind+2];
+    }
+  }
+
+  free_1d_array((void*) send_buf);
+  free_1d_array((void*) recv_buf);
 #endif /* MPI_PARALLEL */
 
 
