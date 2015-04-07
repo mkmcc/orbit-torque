@@ -230,7 +230,7 @@ void torque_converged(double a, double e, double theta, double ia, double ib,
     for (j=0; j<3; j++)
       oldtau[j] = tau[j];
 
-    if (err <= 1.0e-2 * norm(tau))
+    if (err <= 1.0e-4 * norm(tau))
       break;
   }
 
