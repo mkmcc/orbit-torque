@@ -18,6 +18,9 @@ int main (int argc, char *argv[])
   int i, j, n=4;
   double a=0.5, e, theta;
 
+  double emin = 0.5, emax = 1.0;
+  double tmin = 0.0, tmax = 1.0*M_PI;
+
   /* crude progress bar */
   char progress[64] = "[0%...25%...50%...75%...100%]", buf[64] = "";
   int ind, old=0;
@@ -32,8 +35,8 @@ int main (int argc, char *argv[])
 
   for(i=0; i<n; i++){
     for(j=0; j<n; j++){
-      e     =  0.05 + (0.95-0.05) * i/(n-1);
-      theta = (0.05 + (0.95-0.05) * j/(n-1)) * M_PI;
+      e     = emin + (i+0.5)/n * (emax-emin);
+      theta = tmin + (j+0.5)/n * (tmax-tmin);
 
       data_array[0][i][j] = e;
       data_array[1][i][j] = theta;
