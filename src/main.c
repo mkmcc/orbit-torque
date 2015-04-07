@@ -30,7 +30,7 @@ int main (int argc, char *argv[])
       printf("%f\t%f\t%f\n", e, theta, gamma_sq(a, e, theta));
 
       /* crude progress bar */
-      ind = floor( (1.0*i*n+j)/(n*n) * strlen(progress));
+      ind = floor( (1.0*i*n+j+1)/(n*n) * strlen(progress));
       if (ind > old){
         old = ind;
         strncpy(buf, progress, ind);
