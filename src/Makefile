@@ -5,7 +5,7 @@
 # 'make clean'  removes all .o and executable files
 #
 
-CC = gcc
+CC = mpicc
 CFLAGS = -W -Wall -pedantic -O3
 LIBS = -lm
 
