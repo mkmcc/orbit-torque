@@ -232,10 +232,10 @@ double alpha(double a, double e, double theta)
 
   /* estimate the slope and the error due to non-linearity
    */
-  slope = (ta[nfit-1] - ta[0]) / (ia[nfit-1] - ia[0]);
+  slope = (ta[nfit-1]) / (ia[nfit-1]);
 
   err = 0.0;
-  for (i=1; i<nfit-1; i++)
+  for (i=0; i<nfit-1; i++)
     err += fabs(ta[i]-slope*ia[i]);
 
   if (err > 1.0e-2 * fabs(ta[nfit-1])){
@@ -282,10 +282,10 @@ double beta(double a, double e, double theta)
 
   /* estimate the slope and the error due to non-linearity
    */
-  slope = (tb[nfit-1] - tb[0]) / (ib[nfit-1] - ib[0]);
+  slope = (tb[nfit-1]) / (ib[nfit-1]);
 
   err = 0.0;
-  for (i=1; i<nfit-1; i++)
+  for (i=0; i<nfit-1; i++)
     err += fabs(tb[i]-slope*ib[i]);
 
   if (err > 1.0e-2 * fabs(tb[nfit-1]))
