@@ -248,7 +248,7 @@ void torque_helper(double a, double e, double theta, double ia, double ib,
   make_ellipse(a, e, 0.0,    ia,  ib, npts, 0, &kep1, &dm1);
   make_ellipse(a, e, theta, 0.0, 0.0, npts, 1, &kep2, &dm2);
 
-  torque(kep1, dm1, kep2, dm2, npts, tau);
+  torque(kep2, dm2, kep1, dm1, npts, tau);
 
   free_2d_array((void**) kep1);
   free_2d_array((void**) kep2);

@@ -214,11 +214,12 @@ double alpha(double a, double e, double theta)
 
   double axis[3], slope, err;
 
+
   /* ahat for orbit 2 (= the rotated one)
    */
   axis[0] = -cos(theta);
   axis[1] = -sin(theta);
-  axis[2] = 0.0;
+  axis[2] =  0.0;
 
   /* make a list of points {i, tau(i)}
    */
@@ -271,7 +272,7 @@ double beta(double a, double e, double theta)
      results don't make sense.
    */
   axis[0] = -sin(theta);
-  axis[1] =  cos(theta);
+  axis[1] = -cos(theta);
   axis[2] = 0.0;
 
   /* make a list of points {i, tau(i)}
@@ -280,7 +281,7 @@ double beta(double a, double e, double theta)
     ib[i] = 0.0 + 1.0 * lim * (i+1) / (nfit);
 
   for (i=0; i<nfit; i++){
-    torque_converged(a, e, theta, 0.0, ib[i], tau);
+    torque_converged(a, e, -1.0*theta, 0.0, ib[i], tau);
     tb[i] = dot(tau, axis);
   }
 
