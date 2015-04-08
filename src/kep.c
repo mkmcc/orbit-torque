@@ -1,5 +1,9 @@
 #include "kep.h"
 
+/* torque on orbit k1 due to orbit k2 */
+/* - output is the (cartesian vector) torque, stored in the last
+     argument
+ */
 void torque(double **k1, double *m1, double **k2, double *m2,
             int npts,
             double *torque)
@@ -9,6 +13,7 @@ void torque(double **k1, double *m1, double **k2, double *m2,
 
   torque[0] = torque[1] = torque[2] = 0.0;
 
+  /* loop over points in k1 and sum differential torques */
   for (i=0; i<npts; i++){
     dtorque(k1[i], m1[i], k2, m2, npts, dt);
 
@@ -20,6 +25,12 @@ void torque(double **k1, double *m1, double **k2, double *m2,
   return;
 }
 
+
+
+/* torque on point p1 due to orbit kep */
+/* - output is the (cartesian vector) torque, stored in the last
+     argument
+ */
 void dtorque(double *p1, double dm1, double **kep, double *dm,
              int npts,
              double *torque)
@@ -30,17 +41,23 @@ void dtorque(double *p1, double dm1, double **kep, double *dm,
 
   torque[0] = torque[1] = torque[2] = 0.0;
 
+  /* loop over points in kep and sum differential torques */
   for (i=0; i<npts; i++){
+    /* dr vector points *to* p1 */
     dr[0] = p1[0] - kep[i][0];
     dr[1] = p1[1] - kep[i][1];
     dr[2] = p1[2] - kep[i][2];
 
     fact = dm1*dm[i] / pow(rsoft + norm(dr), 3);
 
+    /* df is the force that p1 has on kep[i] */
+    /* (ie, points toward p1) */
     df[0] = dr[0] * fact;
     df[1] = dr[1] * fact;
     df[2] = dr[2] * fact;
 
+    /* dt = r cross f */
+    /* maybe should be using -f here?  don't think it matters... */
     cross(p1, df, dt);
 
     torque[0] += dt[0];
@@ -52,6 +69,24 @@ void dtorque(double *p1, double dm1, double **kep, double *dm,
 }
 
 
+
+/* make a set of points representing a keplerian orbit */
+/* - points are evenly spaced in eccentric anomaly */
+/* - inputs:
+     1. a, e: semi-major axis and eccentricity
+     2. alpha: rotation angle about the z-axis.  (alpha=0 corresponds
+        to an eccentricity vector pointing along the -x direction)
+     3. ia, ib: ann-marie's definitions.  only one can be non-zero
+     4. npts: number of points spaced along the orbit
+     5. shift: shift points by 1/2 spacing.  helps with convergence.
+
+  - outputs:
+    1. kep: list of cartesian coordinates for the points.  this is a
+       2D array.  argument is *** because it's a pointer to the
+       array, which is admittedly confusing.
+    2. dm: list of masses attached to each point.  pointer to a 1D
+       array, which is **
+ */
 void make_ellipse(double a,  double e,  double alpha,
                   double ia, double ib, int npts, int shift,
                   double ***kep, double **dm)
@@ -61,6 +96,7 @@ void make_ellipse(double a,  double e,  double alpha,
   int i;
   double axis[3], old[3], rot;
   double tot;
+
 
   /* -------------------------------------------------- */
   /* allocate memory */
@@ -74,6 +110,7 @@ void make_ellipse(double a,  double e,  double alpha,
   r           = (double*)  calloc_1d_array(npts, sizeof(double));
   v           = (double*)  calloc_1d_array(npts, sizeof(double));
   dl          = (double*)  calloc_1d_array(npts, sizeof(double));
+
 
   /* -------------------------------------------------- */
   /* preliminaries: make points in polar coords */
@@ -166,6 +203,7 @@ void make_ellipse(double a,  double e,  double alpha,
   for (i=1; i<npts-1; i++)
     dl[i] = dist(cartesian[i+1], cartesian[i-1]);
 
+  /* dm = dl/v; normalize total mass to 1 */
   tot = 0.0;
   for (i=0; i<npts; i++){
     mass[i] = dl[i] / v[i];
@@ -174,6 +212,9 @@ void make_ellipse(double a,  double e,  double alpha,
   for (i=0; i<npts; i++)
     mass[i] /= tot;
 
+
+  /* -------------------------------------------------- */
+  /* store outputs in kep and dm */
   *dm  = mass;
   *kep = cartesian;
 
@@ -186,13 +227,18 @@ void make_ellipse(double a,  double e,  double alpha,
   free_1d_array((void*) v);
   free_1d_array((void*) dl);
 
-  /* do not free these! */
+  /* do *not* free these! */
   /* free_1d_array((void*) mass); */
   /* free_2d_array((void**) cartesian); */
 
   return;
 }
 
+
+
+/* helper function used by torque_converged.  not meant to be called
+   directly
+ */
 void torque_helper(double a, double e, double theta, double ia, double ib,
                    int npts,
                    double *tau)
@@ -211,6 +257,15 @@ void torque_helper(double a, double e, double theta, double ia, double ib,
   free_1d_array((void*) dm2);
 }
 
+
+
+/* torque between two orbits with the same semi-major axis a and
+   eccentricity e, with eccentricity vectors separated by the angle
+   theta.  one of the orbit is inclined by either ia or ib, following
+   ann-marie's definitions.  repeatedly doubles the resolution until
+   the torque converges.  result is stored as a cartesian vector in
+   the final argument tau.
+ */
 void torque_converged(double a, double e, double theta, double ia, double ib,
                       double *tau)
 {
