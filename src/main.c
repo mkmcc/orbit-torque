@@ -240,8 +240,8 @@ double alpha(double a, double e, double theta)
 
   if (err > 1.0e-2 * fabs(ta[nfit-1])){
     fprintf(stderr,
-            "[alpha]: nonlinear fit at [a,e] = [%f,%f] (%f %%)\n",
-            a, e, 100.0 * err / ta[nfit-1]);
+            "[alpha]: nonlinear fit at [e,t] = [%f,%f] (%f %%)\n",
+            e, theta, 100.0 * err / ta[nfit-1]);
 
     for(i=0; i<nfit; i++)
       fprintf(stderr, "{%f,\t%f},\n", ia[i], ta[i]);
@@ -290,8 +290,8 @@ double beta(double a, double e, double theta)
 
   if (err > 1.0e-2 * fabs(tb[nfit-1]))
     fprintf(stderr,
-            "[ beta]: nonlinear fit at [a,e] = [%f,%f] (%f %%)\n",
-            a, e, 100.0 * err / tb[nfit-1]);
+            "[ beta]: nonlinear fit at [a,t] = [%f,%f] (%f %%)\n",
+            e, theta, 100.0 * err / tb[nfit-1]);
 
   return slope;
 }
