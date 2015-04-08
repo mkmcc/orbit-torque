@@ -294,7 +294,7 @@ double beta(double a, double e, double theta)
 
   if (err > 1.0e-2 * fabs(tb[nfit-1]))
     fprintf(stderr,
-            "[ beta]: nonlinear fit at [a,t] = [%f,%f] (%f %%)\n",
+            "[ beta]: nonlinear fit at [e,t] = [%f,%f] (%f %%)\n",
             e, theta, 100.0 * err / tb[nfit-1]);
 
   return slope;
