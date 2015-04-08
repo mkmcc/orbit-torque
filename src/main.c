@@ -266,6 +266,10 @@ double beta(double a, double e, double theta)
 
   /* bhat for orbit 2 (= the rotated one)
    */
+  /* TODO: think there's a sign error here.  BUT, there must be
+     another sign error somewhere else which balances it... otherwise
+     results don't make sense.
+   */
   axis[0] = -sin(theta);
   axis[1] =  cos(theta);
   axis[2] = 0.0;
